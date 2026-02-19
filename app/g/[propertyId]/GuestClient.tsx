@@ -1,8 +1,25 @@
 'use client';
 
 import { useState } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/lib/supabase';
 import type { Property } from './page';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+const CARD_STYLE = {
+  style: {
+    base: {
+      color: '#EDE6D3',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      fontSize: '15px',
+      fontSmoothing: 'antialiased',
+      '::placeholder': { color: 'rgba(237,230,211,0.2)' },
+    },
+    invalid: { color: '#F87171', iconColor: '#F87171' },
+  },
+};
 
 type View =
   | 'home'
@@ -404,26 +421,13 @@ function WifiView({ property }: { property: Property }) {
 function UpsellView({ property, type }: { property: Property; type: 'late_checkout' | 'early_checkin' }) {
   const isLate = type === 'late_checkout';
   const price = isLate ? property.late_checkout_price : property.early_checkin_price;
+  const [step, setStep] = useState<'contact' | 'payment' | 'done'>('contact');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async () => {
-    if (!name.trim() || !email.trim()) { setError('Please enter your name and email.'); return; }
-    setError(''); setLoading(true);
-    const { error: dbError } = await supabase.from('upsell_requests').insert({
-      property_id: property.id, type,
-      guest_name: name.trim(), guest_email: email.trim(),
-      note: note.trim() || null, status: 'pending',
-    });
-    setLoading(false);
-    if (dbError) { setError('Something went wrong. Please try again.'); } else { setSubmitted(true); }
-  };
-
-  if (submitted) {
+  if (step === 'done') {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: '40px' }}>
         <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: g(0.1), border: `1px solid ${g(0.25)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '28px' }}>✓</div>
@@ -437,6 +441,20 @@ function UpsellView({ property, type }: { property: Property; type: 'late_checko
     );
   }
 
+  if (step === 'payment') {
+    return (
+      <Elements stripe={stripePromise}>
+        <UpsellPaymentStep
+          property={property} type={type} price={price}
+          name={name} email={email} note={note}
+          onBack={() => setStep('contact')}
+          onSuccess={() => setStep('done')}
+        />
+      </Elements>
+    );
+  }
+
+  // Step 1: contact info
   return (
     <div>
       <PageHeader
@@ -445,11 +463,10 @@ function UpsellView({ property, type }: { property: Property; type: 'late_checko
         sub={isLate ? 'Request extra time before you leave.' : 'Arrive before the standard check-in time.'}
       />
 
-      {/* Price */}
       <div style={{ borderRadius: '20px', padding: '22px 26px', background: g(0.06), border: `1px solid ${g(0.2)}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
         <div>
           <div style={{ fontSize: '12px', color: w(0.35), marginBottom: '5px', letterSpacing: '0.06em' }}>One-time upgrade fee</div>
-          <div style={{ fontSize: '11px', color: w(0.2), letterSpacing: '0.03em' }}>Charged only upon approval</div>
+          <div style={{ fontSize: '11px', color: w(0.2), letterSpacing: '0.03em' }}>Card held now · charged only if approved</div>
         </div>
         <span style={{ ...serif, fontSize: '3rem', fontWeight: 400, color: gold, lineHeight: 1 }}>${price}</span>
       </div>
@@ -463,10 +480,112 @@ function UpsellView({ property, type }: { property: Property; type: 'late_checko
 
       {error && <p style={{ fontSize: '13px', color: '#F87171', marginBottom: '14px' }}>{error}</p>}
 
-      <button onClick={handleSubmit} disabled={loading}
-        style={{ width: '100%', padding: '17px', borderRadius: '16px', background: `linear-gradient(135deg, ${g(0.22)}, ${g(0.1)})`, border: `1px solid ${g(0.32)}`, color: gold, fontSize: '14px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, letterSpacing: '0.04em', transition: 'opacity 0.2s' }}>
-        {loading ? 'Sending…' : `Request ${isLate ? 'Late Checkout' : 'Early Check-in'} · $${price}`}
+      <button
+        onClick={() => {
+          if (!name.trim() || !email.trim()) { setError('Please enter your name and email.'); return; }
+          setError('');
+          setStep('payment');
+        }}
+        style={{ width: '100%', padding: '17px', borderRadius: '16px', background: `linear-gradient(135deg, ${g(0.22)}, ${g(0.1)})`, border: `1px solid ${g(0.32)}`, color: gold, fontSize: '14px', fontWeight: 600, cursor: 'pointer', letterSpacing: '0.04em' }}
+      >
+        Continue to Payment
       </button>
+    </div>
+  );
+}
+
+function UpsellPaymentStep({ property, type, price, name, email, note, onBack, onSuccess }: {
+  property: Property; type: 'late_checkout' | 'early_checkin'; price: number;
+  name: string; email: string; note: string;
+  onBack: () => void; onSuccess: () => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const isLate = type === 'late_checkout';
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async () => {
+    if (!stripe || !elements) return;
+    setLoading(true);
+    setError('');
+
+    try {
+      // 1. Create PaymentIntent (authorize only — no charge yet)
+      const res = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId: property.id, type }),
+      });
+      const { clientSecret, error: apiError } = await res.json();
+      if (apiError) { setError(apiError); setLoading(false); return; }
+
+      // 2. Authorize card — holds funds, does NOT charge yet
+      const cardEl = elements.getElement(CardElement);
+      const { paymentIntent, error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: cardEl!, billing_details: { name, email } },
+      });
+      if (stripeError) { setError(stripeError.message ?? 'Card declined.'); setLoading(false); return; }
+
+      // 3. Record the request with the payment intent id
+      const { error: dbError } = await supabase.from('upsell_requests').insert({
+        property_id: property.id, type,
+        guest_name: name.trim(), guest_email: email.trim(),
+        note: note.trim() || null, status: 'pending',
+        payment_intent_id: paymentIntent!.id,
+        amount: paymentIntent!.amount,
+      });
+      if (dbError) { setError('Failed to submit. Please try again.'); setLoading(false); return; }
+
+      onSuccess();
+    } catch (e: any) {
+      setError(e.message ?? 'Something went wrong.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={onBack}
+        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: w(0.32), fontSize: '13px', letterSpacing: '0.06em', marginBottom: '36px', background: 'none', border: 'none', cursor: 'pointer' }}>
+        <span style={{ fontSize: '16px' }}>←</span> Back
+      </button>
+
+      <PageHeader
+        emoji={isLate ? '🕐' : '🔑'}
+        title="Enter card details"
+        sub="Your card is held now. You're only charged if your host approves."
+      />
+
+      {/* Summary */}
+      <div style={{ borderRadius: '16px', padding: '16px 18px', ...glassCard, marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: 500, color: ivory }}>{isLate ? 'Late Checkout' : 'Early Check-in'}</div>
+          <div style={{ fontSize: '12px', color: w(0.35), marginTop: '2px' }}>{name} · {email}</div>
+        </div>
+        <span style={{ ...serif, fontSize: '1.8rem', fontWeight: 400, color: gold }}>${price}</span>
+      </div>
+
+      {/* Stripe card input */}
+      <div style={{ marginBottom: '20px' }}>
+        <label style={{ display: 'block', fontSize: '10px', color: w(0.28), letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 500 }}>
+          Card Details
+        </label>
+        <div style={{ background: 'rgba(255,248,240,0.04)', border: `1px solid ${g(0.12)}`, borderRadius: '14px', padding: '14px 16px' }}>
+          <CardElement options={CARD_STYLE} />
+        </div>
+      </div>
+
+      {error && <p style={{ fontSize: '13px', color: '#F87171', marginBottom: '14px' }}>{error}</p>}
+
+      <button onClick={handleSubmit} disabled={loading || !stripe}
+        style={{ width: '100%', padding: '17px', borderRadius: '16px', background: `linear-gradient(135deg, ${g(0.22)}, ${g(0.1)})`, border: `1px solid ${g(0.32)}`, color: gold, fontSize: '14px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', opacity: loading || !stripe ? 0.6 : 1, letterSpacing: '0.04em', transition: 'opacity 0.2s', marginBottom: '14px' }}>
+        {loading ? 'Processing…' : `Request ${isLate ? 'Late Checkout' : 'Early Check-in'} · $${price}`}
+      </button>
+
+      <p style={{ textAlign: 'center', fontSize: '12px', color: w(0.28), letterSpacing: '0.02em' }}>
+        🔒 Card authorized now · only charged if host approves
+      </p>
     </div>
   );
 }
