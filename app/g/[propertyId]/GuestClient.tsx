@@ -15,27 +15,40 @@ type View =
   | 'early-checkin'
   | 'checkout-ack';
 
+// ── Design tokens ──────────────────────────────────────────────────────────────
+const gold = '#C9A96E';
+const g = (a: number) => `rgba(201,169,110,${a})`;   // gold with alpha
+const w = (a: number) => `rgba(237,230,211,${a})`;   // warm ivory with alpha
+const ivory = '#EDE6D3';
+const serif = { fontFamily: "var(--font-cormorant), 'Cormorant Garamond', Georgia, serif" };
+const glassCard: React.CSSProperties = {
+  background: 'rgba(255,248,240,0.028)',
+  border: `1px solid ${g(0.1)}`,
+};
+
 const CATEGORY_EMOJI: Record<string, string> = {
   food: '🍽️', cafe: '☕', bar: '🍷', attraction: '🗺️', shopping: '🛍️', transport: '🚌',
 };
 const CATEGORY_LABEL: Record<string, string> = {
-  food: 'Food', cafe: 'Cafe', bar: 'Bar', attraction: 'Attraction', shopping: 'Shopping', transport: 'Transport',
+  food: 'Dining', cafe: 'Café', bar: 'Cocktails', attraction: 'Experiences', shopping: 'Shopping', transport: 'Transport',
 };
+
+// ── Root ───────────────────────────────────────────────────────────────────────
 
 export default function GuestClient({ property }: { property: Property }) {
   const [view, setView] = useState<View>('home');
 
   return (
-    <div className="min-h-dvh bg-[#0a0b0f] text-[#F8FAFC]" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-      {/* Ambient glows */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-teal-500/6 blur-[80px]" />
-        <div className="absolute top-1/3 -left-40 w-80 h-80 rounded-full bg-emerald-500/5 blur-[80px]" />
-        <div className="absolute -bottom-32 right-1/4 w-80 h-80 rounded-full bg-teal-600/4 blur-[80px]" />
+    <div style={{ backgroundColor: '#09080c', minHeight: '100dvh', color: ivory }}>
+      {/* Warm ambient glows */}
+      <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: '-180px', right: '-180px', width: '520px', height: '520px', borderRadius: '50%', background: `radial-gradient(circle, ${g(0.09)}, transparent 65%)` }} />
+        <div style={{ position: 'absolute', top: '45%', left: '-200px', width: '420px', height: '420px', borderRadius: '50%', background: `radial-gradient(circle, ${g(0.05)}, transparent 65%)` }} />
+        <div style={{ position: 'absolute', bottom: '-140px', right: '25%', width: '360px', height: '360px', borderRadius: '50%', background: `radial-gradient(circle, ${g(0.04)}, transparent 65%)` }} />
       </div>
 
-      <div className="relative max-w-md mx-auto">
-        {view === 'home'          && <HomeView          property={property} setView={setView} />}
+      <div style={{ position: 'relative', maxWidth: '448px', margin: '0 auto' }}>
+        {view === 'home'          && <HomeView property={property} setView={setView} />}
         {view === 'wifi'          && <InnerView onBack={() => setView('home')}><WifiView property={property} /></InnerView>}
         {view === 'checkin-guide' && <InnerView onBack={() => setView('home')}><CheckinGuideView property={property} /></InnerView>}
         {view === 'house-rules'   && <InnerView onBack={() => setView('home')}><HouseRulesView property={property} /></InnerView>}
@@ -49,16 +62,18 @@ export default function GuestClient({ property }: { property: Property }) {
   );
 }
 
-// ── Shared wrapper ─────────────────────────────────────────────────────────────
+// ── Inner view wrapper ────────────────────────────────────────────────────────
 
 function InnerView({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
   return (
-    <div className="px-5 pt-12 pb-16">
+    <div style={{ padding: '48px 24px 88px' }}>
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-sm text-white/35 mb-8 hover:text-white/60 transition-colors"
+        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: w(0.32), fontSize: '13px', letterSpacing: '0.06em', marginBottom: '44px', transition: 'color 0.2s' }}
+        onMouseEnter={e => (e.currentTarget.style.color = w(0.65))}
+        onMouseLeave={e => (e.currentTarget.style.color = w(0.32))}
       >
-        <span className="text-lg leading-none">←</span>
+        <span style={{ fontSize: '16px', lineHeight: 1 }}>←</span>
         <span>Back</span>
       </button>
       {children}
@@ -66,7 +81,7 @@ function InnerView({ onBack, children }: { onBack: () => void; children: React.R
   );
 }
 
-// ── Home ──────────────────────────────────────────────────────────────────────
+// ── Home ───────────────────────────────────────────────────────────────────────
 
 function HomeView({ property, setView }: { property: Property; setView: (v: View) => void }) {
   const recs = property.local_recommendations ?? [];
@@ -76,29 +91,33 @@ function HomeView({ property, setView }: { property: Property; setView: (v: View
     <div>
       {/* Hero */}
       {property.cover_photo_url ? (
-        <div className="relative h-56 overflow-hidden mb-0">
+        <div style={{ position: 'relative', height: '62vw', maxHeight: '290px', overflow: 'hidden' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={property.cover_photo_url} alt={property.nickname} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0b0f] via-[#0a0b0f]/50 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-            <div className="inline-flex items-center gap-1.5 bg-teal-500/20 border border-teal-500/30 rounded-full px-2.5 py-1 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-              <span className="text-xs font-medium text-teal-400 tracking-wide">Your stay</span>
-            </div>
-            <h1 className="text-2xl font-semibold text-white leading-tight">{property.nickname}</h1>
-            {property.address && <p className="text-xs text-white/45 mt-0.5">{property.address}</p>}
+          <img src={property.cover_photo_url} alt={property.nickname}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #09080c 0%, rgba(9,8,12,0.55) 55%, rgba(9,8,12,0.05) 100%)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 24px 28px' }}>
+            <StatusPill />
+            <h1 style={{ ...serif, fontSize: '2.5rem', fontWeight: 300, color: ivory, lineHeight: 1.08, margin: '14px 0 0', letterSpacing: '-0.01em' }}>
+              {property.nickname}
+            </h1>
+            {property.address && (
+              <p style={{ fontSize: '12px', color: w(0.38), marginTop: '6px', letterSpacing: '0.04em' }}>
+                {property.address}
+              </p>
+            )}
           </div>
         </div>
       ) : (
-        <div className="px-5 pt-10 pb-2">
-          <div className="inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/20 rounded-full px-3 py-1 mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-            <span className="text-xs font-medium text-teal-400 tracking-wide">Your stay at</span>
-          </div>
-          <h1 className="text-[2rem] font-semibold text-white leading-tight mb-1">{property.nickname}</h1>
+        <div style={{ padding: '60px 24px 32px' }}>
+          <StatusPill />
+          <h1 style={{ ...serif, fontSize: '3.2rem', fontWeight: 300, color: ivory, lineHeight: 1.05, margin: '18px 0 0', letterSpacing: '-0.02em' }}>
+            {property.nickname}
+          </h1>
+          <div style={{ width: '40px', height: '1px', background: g(0.45), margin: '18px 0' }} />
           {property.address && (
-            <p className="text-sm text-white/35 flex items-center gap-1.5 mt-1">
-              <span className="text-base">📍</span>{property.address}
+            <p style={{ fontSize: '12px', color: w(0.35), letterSpacing: '0.05em' }}>
+              📍 {property.address}
             </p>
           )}
         </div>
@@ -106,119 +125,120 @@ function HomeView({ property, setView }: { property: Property; setView: (v: View
 
       {/* Welcome message */}
       {property.welcome_message && (
-        <div className="mx-5 mt-4 mb-2 rounded-2xl border border-white/6 bg-white/[0.03] p-4">
-          <p className="text-xs text-teal-400/70 uppercase tracking-widest font-medium mb-2">From your host</p>
-          <p className="text-sm text-white/60 leading-relaxed italic">&ldquo;{property.welcome_message}&rdquo;</p>
+        <div style={{ margin: '0 20px 4px', padding: '22px 24px 20px', borderRadius: '20px', ...glassCard }}>
+          <span style={{ ...serif, fontSize: '3.2rem', fontWeight: 400, color: g(0.4), lineHeight: 0.75, display: 'block', marginBottom: '10px' }}>
+            &ldquo;
+          </span>
+          <p style={{ ...serif, fontSize: '1.05rem', fontStyle: 'italic', color: w(0.62), lineHeight: 1.7, fontWeight: 300 }}>
+            {property.welcome_message}
+          </p>
+          <p style={{ fontSize: '10px', color: g(0.45), letterSpacing: '0.14em', marginTop: '16px', textTransform: 'uppercase', fontWeight: 500 }}>
+            — Your Host
+          </p>
         </div>
       )}
 
-      {/* Cards */}
-      <div className="px-5 pt-4 pb-16 flex flex-col gap-2.5">
+      {/* Nav cards */}
+      <div style={{ padding: '20px 20px 88px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
 
-        {/* Section: Arrival */}
         {(property.checkin_instructions || property.wifi_name || videos.length > 0) && (
           <SectionLabel>Arrival</SectionLabel>
         )}
 
         {property.checkin_instructions && (
-          <Card onClick={() => setView('checkin-guide')} accent="teal">
-            <CardIcon emoji="🗝️" accent="teal" />
-            <CardBody title="Check-in Guide" sub="Step-by-step instructions" />
-            <Chevron />
-          </Card>
+          <NavCard onClick={() => setView('checkin-guide')} highlight>
+            <CardIcon>🗝️</CardIcon>
+            <CardBody title="Check-in Guide" sub="Step-by-step arrival instructions" />
+            <GoldArrow />
+          </NavCard>
         )}
 
         {property.wifi_name && (
-          <Card onClick={() => setView('wifi')} accent="none">
-            <CardIcon emoji="📶" accent="none" />
-            <div className="flex-1">
-              <div className="font-medium text-sm text-white mb-0.5">Wi-Fi</div>
-              <div className="text-xs text-teal-400/80 font-medium truncate">{property.wifi_name}</div>
+          <NavCard onClick={() => setView('wifi')}>
+            <CardIcon>📶</CardIcon>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: ivory, marginBottom: '3px' }}>Wi-Fi</div>
+              <div style={{ fontSize: '12px', color: gold, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {property.wifi_name}
+              </div>
             </div>
-            <Chevron />
-          </Card>
+            <GoldArrow />
+          </NavCard>
         )}
 
         {videos.length > 0 && (
-          <Card onClick={() => setView('video-guides')} accent="none">
-            <CardIcon emoji="▶️" accent="none" />
-            <div className="flex-1">
-              <div className="font-medium text-sm text-white mb-0.5">Video Guides</div>
-              <div className="text-xs text-white/40">{videos.length} video{videos.length !== 1 ? 's' : ''} from your host</div>
+          <NavCard onClick={() => setView('video-guides')}>
+            <CardIcon>▶️</CardIcon>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: ivory, marginBottom: '3px' }}>Video Guides</div>
+              <div style={{ fontSize: '12px', color: w(0.38) }}>
+                {videos.length} short film{videos.length !== 1 ? 's' : ''} from your host
+              </div>
             </div>
-            <Chevron />
-          </Card>
+            <GoldArrow />
+          </NavCard>
         )}
 
-        {/* Section: Stay */}
         {(property.house_rules || recs.length > 0) && (
           <SectionLabel>Your Stay</SectionLabel>
         )}
 
         {property.house_rules && (
-          <Card onClick={() => setView('house-rules')} accent="none">
-            <CardIcon emoji="📋" accent="none" />
-            <CardBody title="House Rules" sub="Please review before your stay" />
-            <Chevron />
-          </Card>
+          <NavCard onClick={() => setView('house-rules')}>
+            <CardIcon>📋</CardIcon>
+            <CardBody title="House Guidelines" sub="Please review before settling in" />
+            <GoldArrow />
+          </NavCard>
         )}
 
         {recs.length > 0 && (
-          <Card onClick={() => setView('local-guide')} accent="none">
-            <CardIcon emoji="🗺️" accent="none" />
-            <div className="flex-1">
-              <div className="font-medium text-sm text-white mb-0.5">Local Guide</div>
-              <div className="flex gap-1.5 flex-wrap mt-1">
+          <NavCard onClick={() => setView('local-guide')}>
+            <CardIcon>🗺️</CardIcon>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: ivory, marginBottom: '8px' }}>Local Guide</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                 {Array.from(new Set(recs.map(r => r.category))).slice(0, 3).map(cat => (
-                  <span key={cat} className="text-xs text-white/35 bg-white/5 border border-white/8 rounded-full px-2 py-0.5">
+                  <span key={cat} style={{ fontSize: '11px', color: w(0.32), background: 'rgba(255,248,240,0.04)', border: `1px solid ${g(0.1)}`, borderRadius: '99px', padding: '2px 8px' }}>
                     {CATEGORY_EMOJI[cat] ?? '📍'} {CATEGORY_LABEL[cat] ?? cat}
                   </span>
                 ))}
-                {recs.length > 0 && <span className="text-xs text-white/25">· {recs.length} picks</span>}
+                <span style={{ fontSize: '11px', color: w(0.2) }}>· {recs.length} picks</span>
               </div>
             </div>
-            <Chevron />
-          </Card>
+            <GoldArrow />
+          </NavCard>
         )}
 
-        {/* Section: Upsells */}
         {(property.late_checkout_enabled || property.early_checkin_enabled) && (
-          <SectionLabel>Upgrade Your Stay</SectionLabel>
+          <SectionLabel>Upgrades</SectionLabel>
         )}
 
         {property.late_checkout_enabled && (
-          <Card onClick={() => setView('late-checkout')} accent="emerald">
-            <CardIcon emoji="🕐" accent="emerald" />
-            <div className="flex-1">
-              <div className="font-medium text-sm text-white mb-0.5">Late Checkout</div>
-              <div className="text-xs text-white/40">Stay a few extra hours</div>
-            </div>
-            <PriceBadge price={property.late_checkout_price} color="emerald" />
-          </Card>
+          <UpgradeCard
+            onClick={() => setView('late-checkout')}
+            emoji="🕐" title="Late Checkout" sub="Linger a little longer"
+            price={property.late_checkout_price}
+          />
         )}
 
         {property.early_checkin_enabled && (
-          <Card onClick={() => setView('early-checkin')} accent="teal">
-            <CardIcon emoji="🔑" accent="teal" />
-            <div className="flex-1">
-              <div className="font-medium text-sm text-white mb-0.5">Early Check-in</div>
-              <div className="text-xs text-white/40">Arrive before standard time</div>
-            </div>
-            <PriceBadge price={property.early_checkin_price} color="teal" />
-          </Card>
+          <UpgradeCard
+            onClick={() => setView('early-checkin')}
+            emoji="🔑" title="Early Check-in" sub="Arrive on your schedule"
+            price={property.early_checkin_price}
+          />
         )}
 
-        {/* Section: Checkout */}
         <SectionLabel>Departure</SectionLabel>
 
-        <Card onClick={() => setView('checkout-ack')} accent="none">
-          <CardIcon emoji="✅" accent="none" />
+        <NavCard onClick={() => setView('checkout-ack')}>
+          <CardIcon>✅</CardIcon>
           <CardBody title="Checkout Confirmation" sub="Confirm your departure" />
-          <Chevron />
-        </Card>
+          <GoldArrow />
+        </NavCard>
 
-        <p className="text-center text-xs text-white/12 mt-6 leading-5">
-          Powered by Pax · Guest data encrypted & deleted after 14 days
+        <p style={{ textAlign: 'center', fontSize: '11px', color: w(0.1), marginTop: '36px', letterSpacing: '0.08em' }}>
+          Powered by Pax
         </p>
       </div>
     </div>
@@ -229,21 +249,20 @@ function HomeView({ property, setView }: { property: Property; setView: (v: View
 
 function CheckinGuideView({ property }: { property: Property }) {
   const steps = (property.checkin_instructions ?? '').split('\n').map(s => s.trim()).filter(Boolean);
-
   return (
     <div>
-      <ViewHeader emoji="🗝️" accent="teal" title="Check-in Guide" sub="Follow these steps to get settled in" />
-      <div className="flex flex-col gap-3">
+      <PageHeader emoji="🗝️" title="Check-in Guide" sub="Your arrival, step by step" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {steps.map((step, i) => (
-          <div key={i} className="flex gap-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-            <div className="w-7 h-7 rounded-full bg-teal-500/15 border border-teal-500/25 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-bold text-teal-400">{i + 1}</span>
+          <div key={i} style={{ display: 'flex', gap: '16px', ...glassCard, borderRadius: '18px', padding: '18px 20px' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0, background: g(0.1), border: `1px solid ${g(0.25)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '1px' }}>
+              <span style={{ ...serif, fontSize: '14px', fontWeight: 500, color: gold }}>{i + 1}</span>
             </div>
-            <p className="text-sm text-white/75 leading-relaxed pt-0.5">{step}</p>
+            <p style={{ fontSize: '14px', color: w(0.72), lineHeight: 1.65, paddingTop: '3px' }}>{step}</p>
           </div>
         ))}
       </div>
-      <InfoNote>Having trouble getting in? Contact your host directly through your booking platform.</InfoNote>
+      <InfoNote>Having trouble? Contact your host through your booking platform.</InfoNote>
     </div>
   );
 }
@@ -252,21 +271,18 @@ function CheckinGuideView({ property }: { property: Property }) {
 
 function HouseRulesView({ property }: { property: Property }) {
   const rules = (property.house_rules ?? '').split('\n').map(r => r.trim()).filter(Boolean);
-
   return (
     <div>
-      <ViewHeader emoji="📋" accent="none" title="House Rules" sub="Please respect these guidelines during your stay" />
-      <div className="rounded-2xl border border-white/8 bg-white/[0.03] overflow-hidden">
+      <PageHeader emoji="📋" title="House Guidelines" sub="We ask that you respect these during your stay" />
+      <div style={{ borderRadius: '20px', overflow: 'hidden', ...glassCard }}>
         {rules.map((rule, i) => (
-          <div key={i} className={`flex items-start gap-3 p-4 ${i < rules.length - 1 ? 'border-b border-white/6' : ''}`}>
-            <div className="w-5 h-5 rounded-full bg-teal-500/15 border border-teal-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-teal-400 text-xs leading-none">✓</span>
-            </div>
-            <p className="text-sm text-white/70 leading-relaxed">{rule}</p>
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '16px 20px', borderBottom: i < rules.length - 1 ? `1px solid ${g(0.07)}` : 'none' }}>
+            <div style={{ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, background: g(0.08), border: `1px solid ${g(0.2)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: gold, marginTop: '2px' }}>✓</div>
+            <p style={{ fontSize: '14px', color: w(0.68), lineHeight: 1.62 }}>{rule}</p>
           </div>
         ))}
       </div>
-      <InfoNote>Violations may result in additional charges. Thank you for respecting the space.</InfoNote>
+      <InfoNote>Thank you for treating this space with care.</InfoNote>
     </div>
   );
 }
@@ -275,29 +291,27 @@ function HouseRulesView({ property }: { property: Property }) {
 
 function VideoGuidesView({ property }: { property: Property }) {
   const videos = property.property_videos ?? [];
-
   return (
     <div>
-      <ViewHeader emoji="▶️" accent="none" title="Video Guides" sub="Short videos from your host" />
-      <div className="flex flex-col gap-4">
+      <PageHeader emoji="▶️" title="Video Guides" sub="Short films from your host" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {videos.map((v, i) => (
-          <div key={i} className="rounded-2xl border border-white/8 bg-white/[0.03] overflow-hidden">
+          <div key={i} style={{ borderRadius: '20px', overflow: 'hidden', border: `1px solid ${g(0.12)}`, background: '#000' }}>
             {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video
               src={v.url}
               controls
               playsInline
               preload="metadata"
-              className="w-full block"
-              style={{ maxHeight: '260px', backgroundColor: '#000' }}
+              style={{ width: '100%', display: 'block', maxHeight: '260px', background: '#000' }}
             />
-            <div className="px-4 py-3">
-              <div className="font-medium text-sm text-white">{v.title}</div>
+            <div style={{ padding: '14px 18px', background: 'rgba(255,248,240,0.02)' }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: ivory }}>{v.title}</div>
             </div>
           </div>
         ))}
       </div>
-      <InfoNote>Videos are hosted securely and only accessible during your stay.</InfoNote>
+      <InfoNote>Videos are hosted securely for your stay.</InfoNote>
     </div>
   );
 }
@@ -307,41 +321,37 @@ function VideoGuidesView({ property }: { property: Property }) {
 function LocalGuideView({ property }: { property: Property }) {
   const recs = property.local_recommendations ?? [];
   const categories = ['all', ...Array.from(new Set(recs.map(r => r.category)))];
-  const [activeCategory, setActiveCategory] = useState('all');
-  const filtered = activeCategory === 'all' ? recs : recs.filter(r => r.category === activeCategory);
+  const [active, setActive] = useState('all');
+  const filtered = active === 'all' ? recs : recs.filter(r => r.category === active);
 
   return (
     <div>
-      <ViewHeader emoji="🗺️" accent="none" title="Local Guide" sub="Curated picks from your host" />
+      <PageHeader emoji="🗺️" title="Local Guide" sub="Curated favourites from your host" />
       {categories.length > 2 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 mb-5">
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', marginBottom: '24px' }}>
           {categories.map(cat => (
-            <button key={cat} onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                activeCategory === cat
-                  ? 'bg-teal-500/15 border-teal-500/30 text-teal-400'
-                  : 'bg-white/4 border-white/10 text-white/40'
-              }`}>
+            <button key={cat} onClick={() => setActive(cat)}
+              style={{ flexShrink: 0, fontSize: '12px', fontWeight: 500, padding: '6px 14px', borderRadius: '99px', background: active === cat ? g(0.12) : 'rgba(255,248,240,0.04)', border: `1px solid ${active === cat ? g(0.3) : g(0.1)}`, color: active === cat ? gold : w(0.38), transition: 'all 0.15s', cursor: 'pointer' }}>
               {cat === 'all' ? 'All' : `${CATEGORY_EMOJI[cat] ?? '📍'} ${CATEGORY_LABEL[cat] ?? cat}`}
             </button>
           ))}
         </div>
       )}
-      <div className="flex flex-col gap-2.5">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {filtered.map((rec, i) => (
-          <div key={i} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/6 border border-white/8 flex items-center justify-center text-lg flex-shrink-0">
+          <div key={i} style={{ ...glassCard, borderRadius: '18px', padding: '16px 18px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '13px', background: 'rgba(255,248,240,0.04)', border: `1px solid ${g(0.1)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>
                 {CATEGORY_EMOJI[rec.category] ?? '📍'}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="font-medium text-sm text-white">{rec.name}</span>
-                  <span className="text-xs text-white/30 bg-white/5 border border-white/8 rounded-full px-2 py-0.5">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: ivory }}>{rec.name}</span>
+                  <span style={{ fontSize: '10px', color: w(0.28), background: 'rgba(255,248,240,0.04)', border: `1px solid ${g(0.1)}`, borderRadius: '99px', padding: '2px 8px', letterSpacing: '0.04em' }}>
                     {CATEGORY_LABEL[rec.category] ?? rec.category}
                   </span>
                 </div>
-                {rec.note && <p className="text-xs text-white/45 leading-relaxed">{rec.note}</p>}
+                {rec.note && <p style={{ fontSize: '13px', color: w(0.4), lineHeight: 1.55 }}>{rec.note}</p>}
               </div>
             </div>
           </div>
@@ -358,30 +368,33 @@ function WifiView({ property }: { property: Property }) {
   const copy = async (text: string, field: 'name' | 'pass') => {
     await navigator.clipboard.writeText(text);
     setCopied(field);
-    setTimeout(() => setCopied(null), 2000);
+    setTimeout(() => setCopied(null), 2200);
   };
 
   return (
     <div>
-      <ViewHeader emoji="📶" accent="teal" title="Wi-Fi Access" sub="Tap any field to copy" />
-      <div className="flex flex-col gap-3">
-        {[
+      <PageHeader emoji="📶" title="Wi-Fi Access" sub="Tap either field to copy" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {([
           { label: 'Network', value: property.wifi_name, field: 'name' as const },
           { label: 'Password', value: property.wifi_password, field: 'pass' as const },
-        ].map(({ label, value, field }) => (
+        ]).map(({ label, value, field }) => (
           <button key={field} onClick={() => copy(value, field)}
-            className="w-full text-left rounded-2xl border border-white/8 bg-white/[0.04] p-5 active:scale-[0.98] transition-transform">
-            <div className="text-xs text-white/30 uppercase tracking-widest mb-2">{label}</div>
-            <div className="flex items-center justify-between gap-3">
-              <span className="font-semibold text-white text-lg tracking-wide truncate">{value}</span>
-              <span className={`text-xs font-medium flex-shrink-0 transition-colors ${copied === field ? 'text-emerald-400' : 'text-teal-400'}`}>
+            style={{ width: '100%', textAlign: 'left', padding: '22px 24px', borderRadius: '18px', ...glassCard, cursor: 'pointer', display: 'block', transition: 'border-color 0.2s' }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = g(0.25))}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = g(0.1))}
+          >
+            <div style={{ fontSize: '10px', color: w(0.22), letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '12px' }}>{label}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <span style={{ fontSize: '22px', fontWeight: 600, color: ivory, letterSpacing: '0.03em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: copied === field ? '#86EFAC' : gold, flexShrink: 0, letterSpacing: '0.06em', transition: 'color 0.2s' }}>
                 {copied === field ? '✓ Copied' : 'Copy'}
               </span>
             </div>
           </button>
         ))}
       </div>
-      <InfoNote>Having trouble? Restart your Wi-Fi or try forgetting the network first.</InfoNote>
+      <InfoNote>Having trouble? Forget the network on your device, then reconnect.</InfoNote>
     </div>
   );
 }
@@ -412,12 +425,13 @@ function UpsellView({ property, type }: { property: Property; type: 'late_checko
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center text-center py-12">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-3xl mb-5">✓</div>
-        <h2 className="text-2xl font-semibold mb-3">Request sent!</h2>
-        <p className="text-sm text-white/45 leading-relaxed max-w-xs">
-          Your host has been notified and will confirm within a few minutes. You&apos;ll hear back at{' '}
-          <span className="text-teal-400">{email}</span>.
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: '40px' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: g(0.1), border: `1px solid ${g(0.25)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '28px' }}>✓</div>
+        <h2 style={{ ...serif, fontSize: '2.2rem', fontWeight: 400, color: ivory, marginBottom: '6px' }}>Request received</h2>
+        <div style={{ width: '32px', height: '1px', background: g(0.35), margin: '0 auto 20px' }} />
+        <p style={{ fontSize: '14px', color: w(0.42), lineHeight: 1.7, maxWidth: '270px' }}>
+          Your host has been notified and will confirm shortly. You&apos;ll hear back at{' '}
+          <span style={{ color: gold }}>{email}</span>.
         </p>
       </div>
     );
@@ -425,36 +439,39 @@ function UpsellView({ property, type }: { property: Property; type: 'late_checko
 
   return (
     <div>
-      <ViewHeader emoji={isLate ? '🕐' : '🔑'} accent="emerald"
+      <PageHeader
+        emoji={isLate ? '🕐' : '🔑'}
         title={isLate ? 'Late Checkout' : 'Early Check-in'}
-        sub={isLate ? 'Request extra time before you leave.' : 'Request early access before standard check-in.'} />
+        sub={isLate ? 'Request extra time before you leave.' : 'Arrive before the standard check-in time.'}
+      />
 
-      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center justify-between mb-6">
+      {/* Price */}
+      <div style={{ borderRadius: '20px', padding: '22px 26px', background: g(0.06), border: `1px solid ${g(0.2)}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
         <div>
-          <div className="text-xs text-white/40 mb-0.5">One-time fee</div>
-          <div className="text-xs text-white/25">Charged only after host approves</div>
+          <div style={{ fontSize: '12px', color: w(0.35), marginBottom: '5px', letterSpacing: '0.06em' }}>One-time upgrade fee</div>
+          <div style={{ fontSize: '11px', color: w(0.2), letterSpacing: '0.03em' }}>Charged only upon approval</div>
         </div>
-        <span className="text-3xl font-bold text-emerald-400">${price}</span>
+        <span style={{ ...serif, fontSize: '3rem', fontWeight: 400, color: gold, lineHeight: 1 }}>${price}</span>
       </div>
 
-      <div className="flex flex-col gap-3 mb-4">
-        <Field label="Your name" value={name} onChange={setName} placeholder="Jane Smith" />
-        <Field label="Email" value={email} onChange={setEmail} placeholder="jane@example.com" type="email" />
-        <Field label="Note (optional)" value={note} onChange={setNote}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+        <GuestField label="Your name" value={name} onChange={setName} placeholder="Jane Smith" />
+        <GuestField label="Email address" value={email} onChange={setEmail} placeholder="jane@example.com" type="email" />
+        <GuestField label="Note (optional)" value={note} onChange={setNote}
           placeholder={isLate ? 'Requesting until 2pm if possible' : 'Arriving around 10am'} multiline />
       </div>
 
-      {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
+      {error && <p style={{ fontSize: '13px', color: '#F87171', marginBottom: '14px' }}>{error}</p>}
 
       <button onClick={handleSubmit} disabled={loading}
-        className="w-full py-4 rounded-2xl font-semibold text-white text-sm bg-gradient-to-r from-teal-600 to-emerald-500 active:scale-[0.98] transition-transform disabled:opacity-50">
+        style={{ width: '100%', padding: '17px', borderRadius: '16px', background: `linear-gradient(135deg, ${g(0.22)}, ${g(0.1)})`, border: `1px solid ${g(0.32)}`, color: gold, fontSize: '14px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, letterSpacing: '0.04em', transition: 'opacity 0.2s' }}>
         {loading ? 'Sending…' : `Request ${isLate ? 'Late Checkout' : 'Early Check-in'} · $${price}`}
       </button>
     </div>
   );
 }
 
-// ── Checkout Ack ──────────────────────────────────────────────────────────────
+// ── Checkout ───────────────────────────────────────────────────────────────────
 
 function CheckoutAckView({ property }: { property: Property }) {
   const [name, setName] = useState('');
@@ -476,20 +493,19 @@ function CheckoutAckView({ property }: { property: Property }) {
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center text-center py-10">
-        <div className="w-16 h-16 rounded-2xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center text-3xl mb-5">✅</div>
-        <h2 className="text-2xl font-semibold mb-3">Checkout confirmed</h2>
-        <p className="text-sm text-white/45 leading-relaxed max-w-xs mb-8">
-          Your departure has been recorded at{' '}
-          <span className="text-teal-400">{new Date().toLocaleTimeString()}</span>. Safe travels!
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: '40px' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: g(0.1), border: `1px solid ${g(0.25)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '28px' }}>✓</div>
+        <h2 style={{ ...serif, fontSize: '2.4rem', fontWeight: 300, color: ivory, marginBottom: '8px' }}>Safe travels</h2>
+        <div style={{ width: '28px', height: '1px', background: g(0.4), margin: '0 auto 20px' }} />
+        <p style={{ fontSize: '14px', color: w(0.4), lineHeight: 1.72, maxWidth: '260px', marginBottom: '48px' }}>
+          Your departure has been recorded. It was a pleasure having you.
         </p>
-
         {property.review_url && (
           <a href={property.review_url} target="_blank" rel="noopener noreferrer"
-            className="w-full max-w-xs flex items-center justify-center gap-2 py-4 rounded-2xl border border-amber-400/25 bg-amber-400/8 text-amber-300 text-sm font-medium active:scale-[0.98] transition-transform">
-            <span className="text-lg">⭐</span>
-            Enjoyed your stay? Leave a review
-            <span className="text-amber-400/50">↗</span>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '14px 28px', borderRadius: '16px', background: g(0.08), border: `1px solid ${g(0.22)}`, color: gold, fontSize: '13px', fontWeight: 500, textDecoration: 'none', letterSpacing: '0.04em' }}>
+            <span>⭐</span>
+            Leave a review
+            <span style={{ color: g(0.4), fontSize: '13px' }}>↗</span>
           </a>
         )}
       </div>
@@ -498,136 +514,149 @@ function CheckoutAckView({ property }: { property: Property }) {
 
   return (
     <div>
-      <ViewHeader emoji="✅" accent="none" title="Checkout Confirmation" sub="Please confirm you've checked out." />
+      <PageHeader emoji="✅" title="Checkout" sub="Please confirm your departure before you go." />
 
-      <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-xs text-white/35 leading-relaxed mb-5">
-        By confirming checkout you acknowledge that you have vacated the property,
-        removed all personal belongings, returned any keys or access cards, and left
-        the property in the condition described in the house rules.
+      <div style={{ borderRadius: '16px', padding: '16px 20px', ...glassCard, fontSize: '13px', color: w(0.3), lineHeight: 1.72, marginBottom: '28px' }}>
+        By confirming checkout you acknowledge that you have vacated the property, removed all personal belongings, returned any keys or access cards, and left the property in the agreed condition.
       </div>
 
-      <div className="flex flex-col gap-3 mb-4">
-        <Field label="Your full name" value={name} onChange={setName} placeholder="Jane Smith" />
+      <div style={{ marginBottom: '20px' }}>
+        <GuestField label="Your full name" value={name} onChange={setName} placeholder="Jane Smith" />
       </div>
 
-      <label className="flex items-start gap-3 mb-5 cursor-pointer">
-        <div onClick={() => setAgreed(!agreed)}
-          className={`w-5 h-5 rounded-md border flex-shrink-0 flex items-center justify-center transition-colors mt-0.5 ${agreed ? 'bg-teal-500 border-teal-500' : 'border-white/20 bg-white/5'}`}>
-          {agreed && <span className="text-white text-xs">✓</span>}
+      <div onClick={() => setAgreed(!agreed)} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '28px', cursor: 'pointer' }}>
+        <div style={{ width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0, border: `1px solid ${agreed ? gold : w(0.18)}`, background: agreed ? g(0.14) : 'rgba(255,248,240,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px', transition: 'all 0.15s' }}>
+          {agreed && <span style={{ color: gold, fontSize: '11px', fontWeight: 700 }}>✓</span>}
         </div>
-        <span className="text-sm text-white/55 leading-relaxed">
+        <span style={{ fontSize: '13px', color: w(0.48), lineHeight: 1.62 }}>
           I confirm I have fully checked out of {property.nickname}.
         </span>
-      </label>
+      </div>
 
-      {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
+      {error && <p style={{ fontSize: '13px', color: '#F87171', marginBottom: '14px' }}>{error}</p>}
 
       <button onClick={handleSubmit} disabled={loading}
-        className="w-full py-4 rounded-2xl font-semibold text-white text-sm bg-gradient-to-r from-teal-600 to-emerald-500 active:scale-[0.98] transition-transform disabled:opacity-50">
+        style={{ width: '100%', padding: '17px', borderRadius: '16px', background: `linear-gradient(135deg, ${g(0.2)}, ${g(0.09)})`, border: `1px solid ${g(0.3)}`, color: gold, fontSize: '14px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1, letterSpacing: '0.04em', transition: 'opacity 0.2s' }}>
         {loading ? 'Confirming…' : 'Confirm Checkout'}
       </button>
     </div>
   );
 }
 
-// ── Design system components ───────────────────────────────────────────────────
+// ── Design system ─────────────────────────────────────────────────────────────
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function StatusPill() {
   return (
-    <div className="flex items-center gap-3 mt-2 mb-1">
-      <span className="text-xs font-semibold text-white/25 uppercase tracking-widest">{children}</span>
-      <div className="flex-1 h-px bg-white/6" />
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: g(0.1), border: `1px solid ${g(0.25)}`, borderRadius: '99px', padding: '5px 13px' }}>
+      <span className="gold-pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: gold, display: 'block', flexShrink: 0 }} />
+      <span style={{ fontSize: '11px', fontWeight: 500, color: gold, letterSpacing: '0.1em' }}>YOUR STAY</span>
     </div>
   );
 }
 
-function Card({ onClick, accent, children }: {
-  onClick: () => void;
-  accent: 'teal' | 'emerald' | 'none';
-  children: React.ReactNode;
-}) {
-  const borderClass = accent === 'teal' ? 'border-teal-500/20 bg-teal-500/[0.04]'
-    : accent === 'emerald' ? 'border-emerald-500/20 bg-emerald-500/[0.04]'
-    : 'border-white/8 bg-white/[0.03]';
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '10px 0 4px' }}>
+      <div style={{ width: '2px', height: '14px', background: g(0.4), borderRadius: '1px', flexShrink: 0 }} />
+      <span style={{ fontSize: '10px', fontWeight: 600, color: g(0.48), letterSpacing: '0.18em', textTransform: 'uppercase' }}>{children}</span>
+      <div style={{ flex: 1, height: '1px', background: g(0.07) }} />
+    </div>
+  );
+}
+
+function NavCard({ onClick, highlight, children }: { onClick: () => void; highlight?: boolean; children: React.ReactNode }) {
   return (
     <button onClick={onClick}
-      className={`w-full text-left rounded-2xl border ${borderClass} p-4 flex items-center gap-3 active:scale-[0.98] transition-transform`}>
+      style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 18px', borderRadius: '18px', background: highlight ? g(0.05) : 'rgba(255,248,240,0.025)', border: `1px solid ${highlight ? g(0.18) : g(0.09)}`, cursor: 'pointer', transition: 'border-color 0.2s, background 0.2s' }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = g(0.26); e.currentTarget.style.background = 'rgba(255,248,240,0.04)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = highlight ? g(0.18) : g(0.09); e.currentTarget.style.background = highlight ? g(0.05) : 'rgba(255,248,240,0.025)'; }}
+    >
       {children}
     </button>
   );
 }
 
-function CardIcon({ emoji, accent }: { emoji: string; accent: 'teal' | 'emerald' | 'none' }) {
-  const cls = accent === 'teal' ? 'bg-teal-500/15 border-teal-500/20'
-    : accent === 'emerald' ? 'bg-emerald-500/15 border-emerald-500/20'
-    : 'bg-white/6 border-white/8';
+function UpgradeCard({ onClick, emoji, title, sub, price }: { onClick: () => void; emoji: string; title: string; sub: string; price: number }) {
   return (
-    <div className={`w-10 h-10 rounded-xl ${cls} border flex items-center justify-center text-xl flex-shrink-0`}>
-      {emoji}
+    <button onClick={onClick}
+      style={{ width: '100%', textAlign: 'left', padding: '18px 20px', borderRadius: '20px', background: g(0.06), border: `1px solid ${g(0.17)}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', transition: 'border-color 0.2s, background 0.2s' }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = g(0.3); e.currentTarget.style.background = g(0.09); }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = g(0.17); e.currentTarget.style.background = g(0.06); }}
+    >
+      <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: g(0.1), border: `1px solid ${g(0.2)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>
+        {emoji}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: '14px', fontWeight: 500, color: ivory, marginBottom: '3px' }}>{title}</div>
+        <div style={{ fontSize: '12px', color: w(0.36) }}>{sub}</div>
+      </div>
+      <div style={{ ...serif, fontSize: '1.7rem', fontWeight: 400, color: gold, background: g(0.1), border: `1px solid ${g(0.22)}`, borderRadius: '12px', padding: '4px 14px', flexShrink: 0, lineHeight: 1.4 }}>
+        ${price}
+      </div>
+    </button>
+  );
+}
+
+function CardIcon({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ width: '40px', height: '40px', borderRadius: '13px', background: 'rgba(255,248,240,0.04)', border: `1px solid ${g(0.1)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
+      {children}
     </div>
   );
 }
 
 function CardBody({ title, sub }: { title: string; sub: string }) {
   return (
-    <div className="flex-1">
-      <div className="font-medium text-sm text-white mb-0.5">{title}</div>
-      <div className="text-xs text-white/40">{sub}</div>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontSize: '14px', fontWeight: 500, color: ivory, marginBottom: '3px' }}>{title}</div>
+      <div style={{ fontSize: '12px', color: w(0.36) }}>{sub}</div>
     </div>
   );
 }
 
-function PriceBadge({ price, color }: { price: number; color: 'teal' | 'emerald' }) {
-  const cls = color === 'emerald'
-    ? 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
-    : 'text-teal-400 bg-teal-400/10 border-teal-400/20';
-  return (
-    <span className={`text-xs font-bold ${cls} border rounded-full px-2.5 py-1`}>
-      ${price}
-    </span>
-  );
+function GoldArrow() {
+  return <span style={{ color: g(0.35), fontSize: '22px', flexShrink: 0, lineHeight: 1 }}>›</span>;
 }
 
-function Chevron() {
-  return <span className="text-white/18 text-lg flex-shrink-0">›</span>;
-}
-
-function ViewHeader({ emoji, accent, title, sub }: {
-  emoji: string; accent: 'teal' | 'emerald' | 'none'; title: string; sub: string;
-}) {
-  const cls = accent === 'teal' ? 'bg-teal-500/15 border-teal-500/25'
-    : accent === 'emerald' ? 'bg-emerald-500/15 border-emerald-500/25'
-    : 'bg-white/8 border-white/12';
+function PageHeader({ emoji, title, sub }: { emoji: string; title: string; sub: string }) {
   return (
-    <div className="mb-7">
-      <div className={`w-14 h-14 rounded-2xl ${cls} border flex items-center justify-center text-2xl mb-5`}>
+    <div style={{ marginBottom: '36px' }}>
+      <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: g(0.08), border: `1px solid ${g(0.18)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', marginBottom: '22px' }}>
         {emoji}
       </div>
-      <h2 className="text-2xl font-semibold mb-1">{title}</h2>
-      <p className="text-sm text-white/40">{sub}</p>
+      <h2 style={{ ...serif, fontSize: '2.2rem', fontWeight: 400, color: ivory, lineHeight: 1.12, marginBottom: '8px', letterSpacing: '-0.01em' }}>
+        {title}
+      </h2>
+      <p style={{ fontSize: '13px', color: w(0.38), lineHeight: 1.55, letterSpacing: '0.02em' }}>{sub}</p>
     </div>
   );
 }
 
 function InfoNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-5 rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-      <p className="text-xs text-white/30 leading-relaxed text-center">{children}</p>
+    <div style={{ marginTop: '28px', borderRadius: '14px', padding: '14px 18px', ...glassCard }}>
+      <p style={{ fontSize: '12px', color: w(0.26), lineHeight: 1.65, textAlign: 'center', letterSpacing: '0.02em' }}>{children}</p>
     </div>
   );
 }
 
-function Field({ label, value, onChange, placeholder, type = 'text', multiline }: {
+function GuestField({ label, value, onChange, placeholder, type = 'text', multiline }: {
   label: string; value: string; onChange: (v: string) => void;
   placeholder?: string; type?: string; multiline?: boolean;
 }) {
-  const base = 'w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/20 outline-none focus:border-teal-500/40 transition-colors';
+  const base: React.CSSProperties = {
+    width: '100%', background: 'rgba(255,248,240,0.04)', border: `1px solid ${g(0.12)}`,
+    borderRadius: '14px', padding: '13px 16px', color: ivory, fontSize: '14px',
+    fontFamily: 'inherit', boxSizing: 'border-box',
+  };
   return (
     <div>
-      <label className="text-xs text-white/30 uppercase tracking-widest mb-2 block font-medium">{label}</label>
+      <label style={{ display: 'block', fontSize: '10px', color: w(0.28), letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 500 }}>
+        {label}
+      </label>
       {multiline
-        ? <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3} className={`${base} resize-none`} />
-        : <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={base} autoComplete={type === 'email' ? 'email' : 'name'} />
+        ? <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3} style={{ ...base, resize: 'none' }} />
+        : <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={base} />
       }
     </div>
   );
