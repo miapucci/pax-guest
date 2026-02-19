@@ -279,29 +279,25 @@ function VideoGuidesView({ property }: { property: Property }) {
   return (
     <div>
       <ViewHeader emoji="▶️" accent="none" title="Video Guides" sub="Short videos from your host" />
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         {videos.map((v, i) => (
-          <a
-            key={i}
-            href={v.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4 active:scale-[0.98] transition-transform"
-          >
-            <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-teal-400 fill-current ml-0.5" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
+          <div key={i} className="rounded-2xl border border-white/8 bg-white/[0.03] overflow-hidden">
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            <video
+              src={v.url}
+              controls
+              playsInline
+              preload="metadata"
+              className="w-full block"
+              style={{ maxHeight: '260px', backgroundColor: '#000' }}
+            />
+            <div className="px-4 py-3">
+              <div className="font-medium text-sm text-white">{v.title}</div>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm text-white mb-0.5">{v.title}</div>
-              <div className="text-xs text-white/35">Tap to watch</div>
-            </div>
-            <span className="text-white/20 text-lg flex-shrink-0">›</span>
-          </a>
+          </div>
         ))}
       </div>
-      <InfoNote>Videos open in your browser or YouTube app.</InfoNote>
+      <InfoNote>Videos are hosted securely and only accessible during your stay.</InfoNote>
     </div>
   );
 }
