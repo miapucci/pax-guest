@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Cormorant_Garamond } from 'next/font/google';
+import { Cormorant_Garamond, Playfair_Display, Inter } from 'next/font/google';
 import './globals.css';
 
 const cormorant = Cormorant_Garamond({
@@ -10,9 +10,27 @@ const cormorant = Cormorant_Garamond({
   display: 'swap',
 });
 
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
+  variable: '--font-playfair',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'Pax — Guest Guide',
-  description: 'Your property guide, Wi-Fi, and checkout information.',
+  title: {
+    default: 'Pax — Better stays for guests, less work for you',
+    template: '%s · Pax',
+  },
+  description: 'Pax gives guests instant answers and a better stay — so you spend less time on messages.',
 };
 
 export const viewport: Viewport = {
@@ -23,7 +41,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cormorant.variable}>
+    <html lang="en" className={`${cormorant.variable} ${playfair.variable} ${inter.variable}`}>
       <body>{children}</body>
     </html>
   );

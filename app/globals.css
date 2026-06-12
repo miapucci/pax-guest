@@ -16,16 +16,255 @@ textarea::placeholder {
   color: rgba(237, 230, 211, 0.2);
 }
 
+/* Default (host portal / auth / dev): teal focus */
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
   outline: none;
-  border-color: rgba(201, 169, 110, 0.3) !important;
+  border-color: rgba(20, 184, 166, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.08);
 }
 
-button { background: none; border: none; padding: 0; cursor: pointer; }
+/* Guest portal keeps its gold identity */
+.guest-theme input:focus,
+.guest-theme textarea:focus {
+  border-color: rgba(201, 169, 110, 0.3) !important;
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.06);
+}
+
+/* Dark-theme autofill — stops Chrome turning inputs white/yellow */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #F8FAFC;
+  -webkit-box-shadow: 0 0 0 1000px #16181f inset;
+  caret-color: #F8FAFC;
+  transition: background-color 9999s ease-in-out 0s;
+}
+.guest-theme input:-webkit-autofill,
+.guest-theme input:-webkit-autofill:hover,
+.guest-theme input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #EDE6D3;
+  -webkit-box-shadow: 0 0 0 1000px #13111a inset;
+  caret-color: #EDE6D3;
+}
+
+/* Remove number-input spinners (price fields) */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+
+/* Dark select dropdowns where supported */
+select { color-scheme: dark; }
+
+button { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; }
+
+/* Text selection */
+::selection { background: rgba(20, 184, 166, 0.28); color: #F8FAFC; }
+.guest-theme ::selection { background: rgba(201, 169, 110, 0.3); color: #EDE6D3; }
+
+/* Slim dark scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.16); background-clip: content-box; }
+
+/* Keyboard focus ring for buttons & links */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgba(20, 184, 166, 0.6);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Film grain — the texture that separates premium dark UIs from flat ones.
+   Sits above everything, non-interactive, barely perceptible. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  opacity: 0.032;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* Page-content entrance */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Staggered child reveal — one orchestrated entrance beats scattered effects */
+.stagger > * { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+
+/* Light-catch hairline along a card's top edge */
+.hairline-top { position: relative; }
+.hairline-top::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 8%; right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
+  pointer-events: none;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Hover lift for cards & primary CTAs — teal bloom on rise */
+.lift { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, filter 0.18s ease; }
+.lift:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow: 0 8px 32px rgba(13,148,136,0.16), 0 2px 8px rgba(0,0,0,0.3);
+}
+.lift:active { transform: translateY(0); filter: brightness(0.98); }
+
+/* Table / list row hover */
+.row-hover { transition: background 0.12s ease; }
+.row-hover:hover { background: rgba(255, 255, 255, 0.025); }
+
+/* Stat figures — aligned digits */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Responsive helpers */
+@media (max-width: 680px) {
+  .hide-sm { display: none !important; }
+}
+
+/* Form layouts — two columns on desktop, stacked on phones */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+/* Local-guide row: name · category · note · delete */
+.rec-row {
+  display: grid;
+  grid-template-columns: 1fr 160px 1fr 34px;
+  gap: 8px;
+  align-items: end;
+}
+/* Video row: title · url · delete */
+.video-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 34px;
+  gap: 8px;
+  align-items: end;
+}
+/* Horizontal scroll for tab strips on narrow screens */
+.tab-strip {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tab-strip::-webkit-scrollbar { display: none; }
+
+@media (max-width: 640px) {
+  .form-grid-2 { grid-template-columns: 1fr; }
+  .rec-row     { grid-template-columns: 1fr 1fr; }
+  .video-row   { grid-template-columns: 1fr; }
+}
+
+/* Nav link treatment */
+.nav-link {
+  transition: color 0.15s ease, background 0.15s ease;
+  border-radius: 8px;
+}
+.nav-link:hover { color: #F8FAFC !important; background: rgba(255,255,255,0.04); }
 
 @keyframes goldPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
 }
 .gold-pulse { animation: goldPulse 2.5s ease-in-out infinite; }
+
+/* Landing page gradient orb animations */
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(80px, -100px) scale(1.12); }
+  66%       { transform: translate(-60px, 60px) scale(0.92); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(-100px, 80px) scale(1.1); }
+  66%       { transform: translate(70px, -70px) scale(0.94); }
+}
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(50px, 80px) scale(1.15); }
+}
+.orb-1 { animation: orbFloat1 14s ease-in-out infinite; }
+.orb-2 { animation: orbFloat2 17s ease-in-out infinite; }
+.orb-3 { animation: orbFloat3 20s ease-in-out infinite; }
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+  33%       { background-position: 15% 10%, 85% 80%, 60% 40%; }
+  66%       { background-position: 5% 20%, 95% 70%, 40% 60%; }
+}
+.landing-bg {
+  background:
+    radial-gradient(ellipse 65% 55% at 90% 0%, rgba(20,184,166,0.55) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 5% 100%, rgba(16,185,129,0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(20,184,166,0.15) 0%, transparent 70%),
+    #0c0d12;
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+  animation: gradientShift 12s ease-in-out infinite;
+}
+
+/* Hero headline accent — static teal gradient with a soft luminous glow.
+   (Was an animated shimmer; the constant flashing pulled focus from the copy.) */
+.teal-shimmer {
+  background: linear-gradient(115deg, #2DD4BF 0%, #5EEAD4 45%, #99F6E4 75%, #5EEAD4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 28px rgba(20, 184, 166, 0.45));
+}
+
+/* Pricing card hover */
+.pricing-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.pricing-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 32px 80px rgba(20,184,166,0.18);
+  border-color: rgba(20,184,166,0.35) !important;
+}
+
+/* Step card hover */
+.step-card {
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.step-card:hover {
+  border-color: rgba(20,184,166,0.4) !important;
+  transform: translateY(-6px);
+  box-shadow: 0 24px 60px rgba(20,184,166,0.12);
+}

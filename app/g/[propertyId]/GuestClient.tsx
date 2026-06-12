@@ -56,7 +56,7 @@ export default function GuestClient({ property }: { property: Property }) {
   const [view, setView] = useState<View>('home');
 
   return (
-    <div style={{ backgroundColor: '#09080c', minHeight: '100dvh', color: ivory }}>
+    <div className="guest-theme" style={{ backgroundColor: '#09080c', minHeight: '100dvh', color: ivory }}>
       {/* Warm ambient glows */}
       <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         <div style={{ position: 'absolute', top: '-180px', right: '-180px', width: '520px', height: '520px', borderRadius: '50%', background: `radial-gradient(circle, ${g(0.09)}, transparent 65%)` }} />

@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     const { data: property, error } = await supabase
       .from('properties')
-      .select('late_checkout_price, early_checkin_price, late_checkout_enabled, early_checkin_enabled')
+      .select('late_checkout_price, early_checkin_price, late_checkout_enabled, early_checkin_enabled, host_id')
       .eq('id', propertyId)
       .single();
 
@@ -35,6 +35,42 @@ export async function POST(req: Request) {
     const price = isLate ? property.late_checkout_price : property.early_checkin_price;
     const amountCents = Math.round(price * 100);
 
+    // Stripe's minimum charge is $0.50 — a zero/negative price means the host
+    // misconfigured the upsell, so refuse rather than error mid-payment.
+    if (!Number.isFinite(amountCents) || amountCents < 50) {
+      return Response.json({ error: 'This upgrade is not available right now' }, { status: 400 });
+    }
+
+    // Look up host's connected Stripe account for direct payouts
+    let stripeAccountId: string | null = null;
+    if (property.host_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('stripe_account_id')
+        .eq('id', property.host_id)
+        .single();
+      stripeAccountId = profile?.stripe_account_id ?? null;
+    }
+
+    // Hard requirement: without a connected account the funds would land in the
+    // platform balance instead of the host's — block rather than misroute money.
+    if (!stripeAccountId) {
+      return Response.json(
+        { error: 'This host has not finished setting up payouts yet. Please contact them directly.' },
+        { status: 400 }
+      );
+    }
+
+    // An Express account that never finished onboarding can't receive transfers —
+    // catch it here rather than failing at capture time when the host approves.
+    const account = await stripe.accounts.retrieve(stripeAccountId);
+    if (!account.charges_enabled) {
+      return Response.json(
+        { error: 'This host has not finished setting up payouts yet. Please contact them directly.' },
+        { status: 400 }
+      );
+    }
+
     // capture_method: 'manual' means the card is authorized (held) now,
     // but only charged when the host explicitly approves (capture).
     const paymentIntent = await stripe.paymentIntents.create({
@@ -42,6 +78,7 @@ export async function POST(req: Request) {
       currency: 'usd',
       capture_method: 'manual',
       metadata: { propertyId, type },
+      transfer_data: { destination: stripeAccountId },
     });
 
     return Response.json({ clientSecret: paymentIntent.client_secret });
