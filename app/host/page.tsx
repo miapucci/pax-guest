@@ -70,11 +70,12 @@ export default async function HostDashboard() {
     (s: number, p: { total_earned: number | null }) => s + (p.total_earned ?? 0), 0);
 
   let pendingRequests: any[] = [];
+  let pendingCount = 0;
   let decidedCount = 0;
   if (propertyCount > 0) {
-    const [{ data: pending }, { count: decided }] = await Promise.all([
+    const [{ data: pending, count: pendingTotal }, { count: decided }] = await Promise.all([
       db.from('upsell_requests')
-        .select('id, created_at, type, guest_name, amount, property_id')
+        .select('id, created_at, type, guest_name, amount, property_id', { count: 'exact' })
         .in('property_id', propertyIds)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
@@ -85,6 +86,7 @@ export default async function HostDashboard() {
         .neq('status', 'pending'),
     ]);
     pendingRequests = pending ?? [];
+    pendingCount = pendingTotal ?? 0;
     decidedCount = decided ?? 0;
   }
 
@@ -102,7 +104,7 @@ export default async function HostDashboard() {
 
   const stats = [
     { label: 'Properties',       value: String(propertyCount),        icon: ICONS.home },
-    { label: 'Pending requests', value: String(pendingRequests.length), icon: ICONS.inbox },
+    { label: 'Pending requests', value: String(pendingCount), icon: ICONS.inbox },
     { label: 'Total earned',     value: `$${totalEarned.toFixed(0)}`, icon: ICONS.earned, accent: true },
     { label: 'Plan',             value: subLabel,                     icon: ICONS.spark },
   ];

@@ -1,88 +1,51 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Payouts connected' };
+
+const white = '#F8FAFC';
+const muted = 'rgba(248,250,252,0.42)';
+const serif = "var(--font-playfair), 'Playfair Display', Georgia, serif";
+const sans  = "var(--font-inter), -apple-system, 'Inter', sans-serif";
+
 export default function ConnectSuccessPage() {
   return (
-    <html>
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Pax · Payouts Connected</title>
-        <style>{`
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            background: #09080c;
-            font-family: Georgia, serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-          }
-          .card {
-            background: #13111a;
-            border: 1px solid rgba(16,185,129,0.2);
-            border-radius: 20px;
-            padding: 48px 36px;
-            max-width: 420px;
-            width: 100%;
-            text-align: center;
-          }
-          .icon {
-            width: 64px;
-            height: 64px;
-            background: rgba(16,185,129,0.1);
-            border: 1px solid rgba(16,185,129,0.25);
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 28px;
-          }
-          h1 {
-            font-size: 26px;
-            font-weight: 400;
-            color: #EDE6D3;
-            margin-bottom: 12px;
-            letter-spacing: -0.3px;
-          }
-          p {
-            font-family: -apple-system, sans-serif;
-            font-size: 14px;
-            color: rgba(237,230,211,0.5);
-            line-height: 1.7;
-          }
-          .badge {
-            display: inline-block;
-            background: rgba(16,185,129,0.12);
-            border: 1px solid rgba(16,185,129,0.25);
-            color: #10B981;
-            font-family: -apple-system, sans-serif;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 20px;
-          }
-          .logo {
-            font-size: 13px;
-            color: rgba(201,169,110,0.5);
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-top: 32px;
-          }
-        `}</style>
-      </head>
-      <body>
-        <div className="card">
-          <div className="icon">✓</div>
-          <div className="badge">PAYOUTS CONNECTED</div>
-          <h1>You're all set.</h1>
-          <p>
-            Your bank account is connected. Upsell earnings from late checkouts and early check-ins
-            will be paid out directly to you when you approve requests in the Pax app.
-          </p>
-          <p className="logo">PAX</p>
+    <div style={{
+      minHeight: '100dvh', background: '#0c0d12', color: white, fontFamily: sans,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px',
+    }}>
+      <div className="fade-up hairline-top" style={{
+        width: '100%', maxWidth: '440px', textAlign: 'center',
+        background: 'rgba(16,18,24,0.72)', border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '24px', padding: '48px 44px',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+      }}>
+        <div style={{
+          width: '64px', height: '64px', borderRadius: '20px', margin: '0 auto 24px',
+          background: 'rgba(20,184,166,0.1)', border: '1px solid rgba(20,184,166,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px',
+        }}>
+          ⚡
         </div>
-      </body>
-    </html>
+        <h1 style={{ fontFamily: serif, fontSize: '28px', fontWeight: 400, color: white, margin: '0 0 12px', letterSpacing: '-0.4px' }}>
+          Payouts connected
+        </h1>
+        <p style={{ fontFamily: sans, fontSize: '14px', fontWeight: 300, color: muted, margin: '0 0 32px', lineHeight: 1.7 }}>
+          Approved guest upgrades now pay out directly to your bank through Stripe.
+          Your upgrade options are live on your guest portal.
+        </p>
+        <a href="/host/billing" className="lift" style={{
+          display: 'inline-block', fontFamily: sans, fontSize: '14px', fontWeight: 600,
+          color: white, background: 'linear-gradient(135deg, #0D9488, #10B981)',
+          borderRadius: '12px', padding: '14px 32px', textDecoration: 'none',
+          boxShadow: '0 4px 24px rgba(13,148,136,0.25)',
+        }}>
+          Back to Billing
+        </a>
+        <p style={{ fontFamily: sans, fontSize: '12px', fontWeight: 300, color: 'rgba(248,250,252,0.25)', margin: '24px 0 0', lineHeight: 1.6 }}>
+          Stripe may take a moment to finish verification — if Billing still shows
+          &ldquo;Setup unfinished,&rdquo; give it a minute and refresh.
+        </p>
+      </div>
+    </div>
   );
 }
