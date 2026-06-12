@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { createServerClient } from '@supabase/ssr';
 import { createServiceClient } from '@/lib/supabase/service';
+import { getBaseUrl } from '@/lib/base-url';
 import { type NextRequest } from 'next/server';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://paxhq.co';
+    const base = getBaseUrl();
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],

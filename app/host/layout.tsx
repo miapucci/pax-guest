@@ -17,8 +17,12 @@ export default async function HostLayout({ children }: { children: React.ReactNo
 
   const isMia = user.email === DEV_EMAIL;
 
-  // Subscription + trial state (trial = 14 days from account creation, matching the iOS app)
+  // Web signups don't create a profiles row (the iOS app used to) — guarantee one
+  // exists before anything touches properties/billing, or FK inserts fail.
   const db = createServiceClient();
+  await db.from('profiles').upsert({ id: user.id }, { onConflict: 'id', ignoreDuplicates: true });
+
+  // Subscription + trial state (trial = 14 days from account creation, matching the iOS app)
   const [{ data: profile }, { data: earnings }] = await Promise.all([
     db.from('profiles').select('subscription_status, plan').eq('id', user.id).maybeSingle(),
     db.from('properties').select('total_earned').eq('host_id', user.id),

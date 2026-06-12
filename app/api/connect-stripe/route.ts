@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
+import { getBaseUrl } from '@/lib/base-url';
 import { type NextRequest } from 'next/server';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
         .upsert({ id: userId, stripe_account_id: accountId });
     }
 
-    const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.paxhq.co';
+    const base = getBaseUrl();
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: `${base}/connect/refresh`,

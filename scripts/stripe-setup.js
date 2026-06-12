@@ -32,11 +32,12 @@ async function run() {
   console.log('1/3  Creating webhook endpoint...');
 
   const webhook = await stripe.webhookEndpoints.create({
-    url: 'https://pax-guest.vercel.app/api/webhooks/stripe',
+    url: 'https://paxhq.co/api/webhooks/stripe',
     enabled_events: [
       'checkout.session.completed',
       'customer.subscription.updated',
       'customer.subscription.deleted',
+      'invoice.payment_failed',
     ],
     description: 'Pax host subscription events',
   });

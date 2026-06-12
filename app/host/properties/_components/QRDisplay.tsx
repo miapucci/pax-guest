@@ -15,7 +15,10 @@ type Props = {
 };
 
 export default function QRDisplay({ propertyId, propertyName }: Props) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://paxhq.co');
+  const rawBase = process.env.NEXT_PUBLIC_BASE_URL?.trim().replace(/\/+$/, '');
+  const baseUrl = rawBase
+    ? (/^https?:\/\//i.test(rawBase) ? rawBase : `https://${rawBase}`)
+    : (typeof window !== 'undefined' ? window.location.origin : 'https://paxhq.co');
   const guestUrl = `${baseUrl}/g/${propertyId}`;
   const printRef = useRef<HTMLDivElement>(null);
 
